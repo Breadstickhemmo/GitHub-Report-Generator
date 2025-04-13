@@ -1,0 +1,16 @@
+# Node.js
+node_modules/
+.env
+
+# Python
+venv/
+__pycache__/
+reports/
+
+# React
+build/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
