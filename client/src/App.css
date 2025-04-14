@@ -200,7 +200,7 @@ body {
 }
 
 .modal-content .form input {
-  width: 95%;
+  width: 100%;
 }
 
 .modal-content button[type="submit"] {
