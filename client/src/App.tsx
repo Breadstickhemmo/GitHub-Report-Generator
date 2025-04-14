@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 
 interface Report {
@@ -16,6 +16,9 @@ const App = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reports, setReports] = useState<Report[]>([]);
+
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/reports')
@@ -60,11 +63,39 @@ const App = () => {
     }
   };
 
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Регистрация');
+    setIsRegisterOpen(false);
+  };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Вход');
+    setIsLoginOpen(false);
+  };
+
   return (
     <div className="container">
       <header className="header">
-        <h1>GitHub Report Generator</h1>
-        <p>Анализ качества кода репозиториев за выбранный период</p>
+        <div className="header-content">
+          <h1>GitHub Report Generator</h1>
+          <p>Анализ качества кода репозиториев за выбранный период</p>
+        </div>
+        <div className="auth-buttons">
+          <button 
+            className="secondary-btn" 
+            onClick={() => setIsLoginOpen(true)}
+          >
+            Вход
+          </button>
+          <button 
+            className="primary-btn" 
+            onClick={() => setIsRegisterOpen(true)}
+          >
+            Регистрация
+          </button>
+        </div>
       </header>
 
       <div className="card">
@@ -158,6 +189,58 @@ const App = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Модальное окно регистрации */}
+      {isRegisterOpen && (
+        <div className="modal-overlay" onClick={() => setIsRegisterOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Регистрация</h2>
+            <form onSubmit={handleRegister} className="form">
+              <div className="form-group">
+                <label>Email</label>
+                <input type="email" required />
+              </div>
+              <div className="form-group">
+                <label>Имя пользователя</label>
+                <input type="text" required />
+              </div>
+              <div className="form-group">
+                <label>Пароль</label>
+                <input type="password" required />
+              </div>
+              <div className="form-group">
+                <label>Подтвердите пароль</label>
+                <input type="password" required />
+              </div>
+              <button type="submit" className="primary-btn">
+                Зарегистрироваться
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно входа */}
+      {isLoginOpen && (
+        <div className="modal-overlay" onClick={() => setIsLoginOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Вход</h2>
+            <form onSubmit={handleLogin} className="form">
+              <div className="form-group">
+                <label>Email</label>
+                <input type="email" required />
+              </div>
+              <div className="form-group">
+                <label>Пароль</label>
+                <input type="password" required />
+              </div>
+              <button type="submit" className="primary-btn">
+                Войти
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
