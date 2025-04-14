@@ -81,7 +81,7 @@ const App = () => {
           </div>
 
           <div className="form-group">
-            <label>Email для отправки</label>
+            <label>Email пользователя GitHub</label>
             <input
               type="email"
               placeholder="example@domain.com"
