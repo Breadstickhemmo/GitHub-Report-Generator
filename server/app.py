@@ -2,6 +2,7 @@ import os
 import uuid
 import base64
 import time
+import json
 import requests
 import logging
 from dotenv import load_dotenv
@@ -97,7 +98,6 @@ def get_github_files(repo_url: str, start_date: str, end_date: str) -> list:
             commit_date = commit['commit']['author']['date']
             author_email = commit['commit']['author']['email']
             
-            # Получаем детали коммита
             files_url = f"https://api.github.com/repos/{owner}/{repo}/commits/{commit_sha}"
             files_response = requests.get(files_url, headers=headers, timeout=10)
             
@@ -110,16 +110,13 @@ def get_github_files(repo_url: str, start_date: str, end_date: str) -> list:
                 logging.error(f"Неожиданный формат ответа для коммита {commit_sha}: {type(data)}")
                 continue
                 
-            # Фильтруем файлы по расширению
             for file in data.get('files', []):
                 filename = file.get('filename', 'unknown')
                 
-                # Пропускаем файлы с неразрешенными расширениями
                 if not any(filename.endswith(ext) for ext in ALLOWED_EXTENSIONS):
                     logging.debug(f"Пропущен файл {filename}: недопустимое расширение")
                     continue
                 
-                # Пропускаем директории
                 if '/' in filename and '.' not in filename.split('/')[-1]:
                     logging.debug(f"Пропущена директория: {filename}")
                     continue
@@ -161,26 +158,37 @@ def get_github_files(repo_url: str, start_date: str, end_date: str) -> list:
         logging.error(f"Непредвиденная ошибка: {str(e)}")
         raise
 
-def generate_txt_report(report_id: str, files_data: list):
+def generate_json_report(report_id: str, files_data: list):
     try:
         report_dir = os.path.join("reports", report_id)
         os.makedirs(report_dir, exist_ok=True)
         
+        # Формируем структуру JSON
+        report_data = {
+            "report_id": report_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "files": []
+        }
+        
         for file_data in files_data:
-            filename = file_data.get('filename', 'unknown')
-            safe_filename = "".join(c if c.isalnum() else "_" for c in filename)[:50]
-            file_path = os.path.join(report_dir, f"{safe_filename}.txt")
+            # Добавляем метаданные и содержимое файлов
+            report_data["files"].append({
+                "filename": file_data.get('filename', 'N/A'),
+                "commit_date": file_data.get('commit_date', 'N/A'),
+                "author_email": file_data.get('author_email', 'N/A'),
+                "code": file_data.get('code', 'Ошибка: содержимое недоступно'),
+                "extension": os.path.splitext(file_data.get('filename', ''))[1]
+            })
+        
+        # Сохраняем в JSON файл
+        json_filename = os.path.join(report_dir, f"report_{report_id}.json")
+        with open(json_filename, 'w', encoding='utf-8') as f:
+            json.dump(report_data, f, ensure_ascii=False, indent=2)
             
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(f"Файл: {file_data.get('filename', 'N/A')}\n")
-                f.write(f"Дата коммита: {file_data.get('commit_date', 'N/A')}\n")
-                f.write(f"Автор: {file_data.get('author_email', 'N/A')}\n")
-                f.write("---- Код ----\n")
-                f.write(file_data.get('code', 'Ошибка: содержимое недоступно'))
-                f.write("\n" + "="*40 + "\n")
-                
+        logging.info(f"JSON-отчет сохранен: {json_filename}")
+            
     except Exception as e:
-        logging.error(f"Ошибка генерации отчета {report_id}: {str(e)}")
+        logging.error(f"Ошибка генерации JSON-отчета {report_id}: {str(e)}")
         raise
 
 def process_report(report_id: str):
@@ -199,12 +207,11 @@ def process_report(report_id: str):
         files_data = get_github_files(repo_url, start_date, end_date)
         
         logging.info(f"Генерация отчета для {report_id}")
-        generate_txt_report(report_id, files_data)
+        generate_json_report(report_id, files_data)
         
     except Exception as e:
         logging.error(f"Критическая ошибка обработки отчета {report_id}: {str(e)}", exc_info=True)
     finally:
-        # Обновляем статус даже при ошибке
         for r in reports:
             if r['id'] == report_id:
                 r['status'] = 'completed'
@@ -219,7 +226,6 @@ def generate_report():
         start_date = data.get('startDate')
         end_date = data.get('endDate')
         
-        # Валидация данных
         if not validate_github_url(github_url):
             return jsonify({"error": "Некорректный GitHub URL"}), 400
             
@@ -229,7 +235,6 @@ def generate_report():
         except ValueError:
             return jsonify({"error": "Некорректный формат даты"}), 400
 
-        # Создание отчета
         report_id = str(uuid.uuid4())
         new_report = {
             'id': report_id,
@@ -241,7 +246,6 @@ def generate_report():
         }
         reports.append(new_report)
         
-        # Запуск обработки в отдельном потоке
         Thread(target=process_report, args=(report_id,)).start()
         
         return jsonify({
