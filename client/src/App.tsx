@@ -200,7 +200,6 @@ const App = () => {
               }
               throw err;
         } finally {
-            // No general loading state modification needed here, form handles its own
         }
     };
 
@@ -216,7 +215,7 @@ const App = () => {
         }
         setIsRegisterOpen(false);
         toast.success(data.message || 'Регистрация успешна! Теперь вы можете войти.');
-        setIsLoginOpen(true); // Automatically open login after successful registration
+        setIsLoginOpen(true);
     };
 
     const handleLogin = async (formData: Record<string, string>) => {
@@ -236,7 +235,7 @@ const App = () => {
         setAuthToken(data.access_token);
         setCurrentUser(data.user);
         setIsAuthenticated(true);
-        setIsLoginOpen(false); // Close login modal on success
+        setIsLoginOpen(false);
         toast.success(`Добро пожаловать, ${data.user.username}!`);
     };
 
@@ -245,56 +244,75 @@ const App = () => {
         return <div style={{ textAlign: 'center', margin: '4rem 0', fontSize: '1.2em' }}>Проверка авторизации...</div>;
     }
 
-    // Define close handlers separately for clarity
     const closeLoginModal = () => {
         setIsLoginOpen(false);
-        setError(null); // Clear error when closing
+        setError(null); 
     };
 
     const closeRegisterModal = () => {
         setIsRegisterOpen(false);
-        setError(null); // Clear error when closing
+        setError(null);
     };
 
-
     return (
-        <div className="container">
-            <Header
-                isAuthenticated={isAuthenticated}
-                user={currentUser}
-                // Only set the modal state to true on click
-                onLoginClick={() => setIsLoginOpen(true)}
-                onRegisterClick={() => setIsRegisterOpen(true)}
-                onLogoutClick={handleLogout}
-            />
+      <div className="container">
+          <Header
+              isAuthenticated={isAuthenticated}
+              user={currentUser}
+              onLoginClick={() => setIsLoginOpen(true)}
+              onRegisterClick={() => setIsRegisterOpen(true)}
+              onLogoutClick={handleLogout}
+          />
 
-            {error && (
-                <div style={{ color: 'red', background: '#ffebee', border: '1px solid red', borderRadius: '8px', padding: '1rem', textAlign: 'center', margin: '1rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                   <span>Ошибка: {error}</span>
-                    <button onClick={() => setError(null)} style={{ marginLeft: '10px', background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '1.2em', padding: '0 5px' }}>✖</button>
-                </div>
-            )}
+          {!isAuthenticated ? (
+              <>
+                  <div className="card" style={{ textAlign: 'center', marginTop: '2rem' }}>
+                      <h2>Добро пожаловать!</h2>
+                      <p>Войдите или зарегистрируйтесь, чтобы начать генерировать отчеты по репозиториям GitHub.</p>
+                  </div>
 
-            {!isAuthenticated ? (
-                <div className="card" style={{ textAlign: 'center', marginTop: '2rem' }}>
-                    <h2>Добро пожаловать!</h2>
-                    <p>Войдите или зарегистрируйтесь, чтобы начать генерировать отчеты по репозиториям GitHub.</p>
-                </div>
-            ) : (
-                <>
-                    <ReportForm onSubmit={handleGenerateReport} />
-                    {isLoading && reports.length === 0 ? (
-                        <div style={{ textAlign: 'center', margin: '2rem 0' }}>Загрузка истории отчетов...</div>
-                    ) : (
-                        <ReportTable reports={reports} isLoading={isLoading} />
-                    )}
-                </>
-            )}
+                  <div className="welcome-info card">
+                      <h3>Что это за приложение?</h3>
+                      <p style={{ textAlign: 'center'}}>
+                          Это сервис для автоматического анализа качества кода разработчиков
+                          в GitHub-репозиториях. Приложение помогает оценить код, написанный
+                          конкретным автором за выбранный период времени.
+                      </p>
+                      <h4>Как это работает:</h4>
+                      <ul>
+                          <li>
+                              Вы указываете публичный репозиторий на GitHub, email автора коммитов
+                              и временной интервал для анализа.
+                          </li>
+                          <li>
+                              Сервис загружает соответствующие файлы с кодом из истории коммитов.
+                          </li>
+                          <li>
+                              Собранные данные отправляются AI-модели (YandexGPT) для глубокого анализа
+                              на предмет потенциальных ошибок, уязвимостей, соответствия кодстайлу
+                              и архитектурных проблем.
+                          </li>
+                          <li>
+                              На основе ответа AI формируется отчет, который вы можете скачать
+                              для дальнейшего изучения и отслеживания динамики качества кода.
+                          </li>
+                      </ul>
+                  </div>
+              </>
+          ) : (
+              <>
+                  <ReportForm onSubmit={handleGenerateReport} />
+                  {isLoading && reports.length === 0 ? (
+                      <div style={{ textAlign: 'center', margin: '2rem 0' }}>Загрузка истории отчетов...</div>
+                  ) : (
+                      <ReportTable reports={reports} isLoading={isLoading} />
+                  )}
+              </>
+          )}
 
-            {/* Auth Modals */}
             <AuthModal
                 isOpen={isRegisterOpen}
-                onClose={closeRegisterModal} // Use the dedicated close handler
+                onClose={closeRegisterModal}
                 onSubmit={handleRegister}
                 title="Регистрация"
                 submitButtonText="Зарегистрироваться"
@@ -302,7 +320,7 @@ const App = () => {
 
             <AuthModal
                 isOpen={isLoginOpen}
-                onClose={closeLoginModal} // Use the dedicated close handler
+                onClose={closeLoginModal}
                 onSubmit={handleLogin}
                 title="Вход"
                 submitButtonText="Войти"

@@ -26,6 +26,12 @@ interface AuthModalProps {
   submitButtonText: string;
 }
 
+const ClearIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+    </svg>
+);
+
 const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
@@ -41,7 +47,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
     formState: { errors, isSubmitting },
     reset,
     watch,
+    setValue,
   } = useForm<AuthFormData>({
+    mode: 'onBlur',
     defaultValues: {
         email: "",
         password: "",
@@ -51,6 +59,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
   });
 
   const passwordValue = watch('password');
+  const emailValue = watch('email');
+  const usernameValue = watch('username');
+  const confirmPasswordValue = watch('confirm_password');
 
   useEffect(() => {
     if (isOpen) {
@@ -77,6 +88,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  const handleClearInput = (fieldName: keyof AuthFormData) => {
+      setValue(fieldName, '', { shouldValidate: true, shouldDirty: true });
+  };
+
   const registerErrors = errors as RegisterFieldErrors;
 
   if (!isOpen) {
@@ -99,62 +114,114 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
           <div className="form-group">
             <label htmlFor="email">Email</label>
-            <input
-                type="email"
-                id="email"
-                className={errors.email ? 'input-error' : ''}
-                {...register("email", {
-                    required: "Email обязателен",
-                    pattern: { value: /^\S+@\S+$/i, message: "Неверный формат email" }
-                })}
-                disabled={isSubmitting}
-                autoComplete="email"
-            />
+            <div className="input-wrapper">
+                <input
+                    type="email"
+                    id="email"
+                    className={errors.email ? 'input-error' : ''}
+                    {...register("email", {
+                        required: "Email обязателен",
+                        pattern: { value: /^\S+@\S+$/i, message: "Неверный формат email" }
+                    })}
+                    disabled={isSubmitting}
+                    autoComplete="email"
+                />
+                {emailValue && !isSubmitting && (
+                    <button
+                      type="button"
+                      className="clear-input-btn"
+                      onClick={() => handleClearInput('email')}
+                      aria-label="Очистить Email"
+                      title="Очистить Email"
+                    >
+                      <ClearIcon />
+                    </button>
+                )}
+            </div>
              {errors.email && <span className="error-message">{errors.email.message}</span>}
           </div>
 
           {isRegister && (
             <div className="form-group">
               <label htmlFor="username">Имя пользователя</label>
-              <input
-                type="text"
-                id="username"
-                className={registerErrors.username ? 'input-error' : ''}
-                {...register("username", { required: isRegister ? "Имя пользователя обязательно" : false })}
-                disabled={isSubmitting}
-                autoComplete="username"
-              />
+               <div className="input-wrapper">
+                  <input
+                    type="text"
+                    id="username"
+                    className={registerErrors.username ? 'input-error' : ''}
+                    {...register("username", { required: isRegister ? "Имя пользователя обязательно" : false })}
+                    disabled={isSubmitting}
+                    autoComplete="username"
+                  />
+                  {usernameValue && !isSubmitting && (
+                    <button
+                      type="button"
+                      className="clear-input-btn"
+                      onClick={() => handleClearInput('username')}
+                      aria-label="Очистить Имя пользователя"
+                      title="Очистить Имя пользователя"
+                    >
+                      <ClearIcon />
+                    </button>
+                 )}
+               </div>
               {registerErrors.username && <span className="error-message">{registerErrors.username.message}</span>}
             </div>
           )}
 
           <div className="form-group">
             <label htmlFor="password">Пароль</label>
-            <input
-                type="password"
-                id="password"
-                className={errors.password ? 'input-error' : ''}
-                {...register("password", { required: "Пароль обязателен" })}
-                disabled={isSubmitting}
-                autoComplete={isRegister ? "new-password" : "current-password"}
-            />
+             <div className="input-wrapper">
+                <input
+                    type="password"
+                    id="password"
+                    className={errors.password ? 'input-error' : ''}
+                    {...register("password", { required: "Пароль обязателен" })}
+                    disabled={isSubmitting}
+                    autoComplete={isRegister ? "new-password" : "current-password"}
+                />
+                 {passwordValue && !isSubmitting && (
+                    <button
+                      type="button"
+                      className="clear-input-btn"
+                      onClick={() => handleClearInput('password')}
+                      aria-label="Очистить Пароль"
+                      title="Очистить Пароль"
+                    >
+                      <ClearIcon />
+                    </button>
+                 )}
+            </div>
             {errors.password && <span className="error-message">{errors.password.message}</span>}
           </div>
 
           {isRegister && (
             <div className="form-group">
               <label htmlFor="confirm_password">Подтвердите пароль</label>
-              <input
-                type="password"
-                id="confirm_password"
-                className={registerErrors.confirm_password ? 'input-error' : ''}
-                {...register("confirm_password", {
-                    required: isRegister ? "Подтверждение пароля обязательно" : false,
-                    validate: value => isRegister ? (value === passwordValue || "Пароли не совпадают") : true
-                })}
-                disabled={isSubmitting}
-                autoComplete="new-password"
-               />
+              <div className="input-wrapper">
+                  <input
+                    type="password"
+                    id="confirm_password"
+                    className={registerErrors.confirm_password ? 'input-error' : ''}
+                    {...register("confirm_password", {
+                        required: isRegister ? "Подтверждение пароля обязательно" : false,
+                        validate: value => isRegister ? (value === passwordValue || "Пароли не совпадают") : true
+                    })}
+                    disabled={isSubmitting}
+                    autoComplete="new-password"
+                   />
+                   {confirmPasswordValue && !isSubmitting && (
+                        <button
+                          type="button"
+                          className="clear-input-btn"
+                          onClick={() => handleClearInput('confirm_password')}
+                          aria-label="Очистить Подтверждение пароля"
+                          title="Очистить Подтверждение пароля"
+                        >
+                          <ClearIcon />
+                        </button>
+                    )}
+               </div>
                {registerErrors.confirm_password && <span className="error-message">{registerErrors.confirm_password.message}</span>}
             </div>
           )}
