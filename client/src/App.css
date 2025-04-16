@@ -17,6 +17,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
   border-bottom: 1px solid #eee;
 }
 
@@ -33,11 +35,13 @@ body {
 .header p {
   color: #666;
   font-size: 1.25rem;
+  margin: 0;
 }
 
 .auth-buttons {
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 .card {
@@ -48,66 +52,56 @@ body {
   margin-bottom: 2rem;
 }
 
-.form-group,
-.date-group {
-  margin-left: -12px;
-  margin-right: -12px;
-}
-
 .form-group {
-  padding: 0 12px;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+.modal-content .form-group {
+   margin-bottom: 1rem;
 }
 
 .form-group label {
   display: block;
-  margin-top: 0.5rem;
   margin-bottom: 0.5rem;
   color: #333;
   font-weight: 500;
 }
 
-.form input {
+.form input,
+.date-field input {
+  box-sizing: border-box;
   width: 100%;
   padding: 12px;
-  border: 2px solid #e0e0e0;
+  border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.form input:focus {
+.form input:focus,
+.date-field input:focus {
   border-color: #007bff;
   outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .date-group {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  margin-bottom: 1.5rem;
+  gap: 24px;
+  margin-bottom: 1rem;
 }
 
 .date-field {
   display: flex;
   flex-direction: column;
-  padding: 10px 12px;
-  background: transparent;
-  border-radius: 8px;
-  transition: transform 0.2s ease;
 }
 
-.date-field input {
-  margin-top: 8px;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-}
-
-.form input,
-.date-field input {
-  width: 100%;
-  margin-left: -12px;
-  margin-right: -12px;
+.date-field label {
+   display: block;
+   margin-bottom: 0.5rem;
+   color: #333;
+   font-weight: 500;
 }
 
 .primary-btn {
@@ -118,14 +112,22 @@ body {
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: background 0.3s ease;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
   width: 100%;
   max-width: 300px;
   margin: 0 auto;
   display: block;
 }
 
-.primary-btn:hover {
+.primary-btn:disabled,
+.secondary-btn:disabled {
+  background-color: #6c757d;
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+
+.primary-btn:hover:not(:disabled) {
   background: #0056b3;
 }
 
@@ -136,10 +138,10 @@ body {
   border-radius: 6px;
   border: none;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
 }
 
-.secondary-btn:hover {
+.secondary-btn:hover:not(:disabled) {
   background: #5a6268;
 }
 
@@ -154,6 +156,7 @@ body {
   padding: 14px;
   text-align: left;
   border-bottom: 1px solid #eee;
+  vertical-align: middle;
 }
 
 .reports-table th {
@@ -162,8 +165,15 @@ body {
   font-weight: 600;
 }
 
-.reports-table tr:hover {
+.reports-table tbody tr:hover {
   background: #f1f1f1;
+}
+.reports-table td a {
+    color: #007bff;
+    text-decoration: none;
+}
+.reports-table td a:hover {
+    text-decoration: underline;
 }
 
 .modal-overlay {
@@ -193,35 +203,65 @@ body {
   margin-top: 0;
   margin-bottom: 1.5rem;
   color: #1a1a1a;
-}
-
-.modal-content .form-group {
-  margin-bottom: 1.5rem;
-}
-
-.modal-content .form input {
-  width: 100%;
+  text-align: center;
 }
 
 .modal-content button[type="submit"] {
   margin-top: 1.5rem;
-  width: 100%;
-  max-width: 300px;
   margin-left: auto;
   margin-right: auto;
 }
 
+.error-message {
+  color: #dc3545;
+  font-size: 0.875em;
+  margin-top: 4px;
+  display: block;
+}
+
+.form input.input-error,
+.date-field input.input-error {
+  border-color: #dc3545;
+}
+
+.form input.input-error:focus,
+.date-field input.input-error:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+
 @media (max-width: 768px) {
+  .header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+  }
+  .header-content {
+      text-align: left;
+  }
+   .header h1 {
+      font-size: 2rem;
+   }
+   .header p {
+       font-size: 1rem;
+   }
+   .auth-buttons {
+       width: 100%;
+       justify-content: flex-end;
+   }
+
   .date-group {
-    gap: 15px;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .date-field {
+     padding: 0;
   }
 
   .modal-content {
     padding: 1.5rem;
-  }
-
-  .modal-content .form input {
-    margin: 0 8px;
-    width: 95%;
+    max-width: 90%;
   }
 }

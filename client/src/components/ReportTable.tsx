@@ -1,5 +1,6 @@
 import React from 'react';
-import { Report } from '../types'; 
+import { Report } from '../types';
+import { toast } from 'react-toastify';
 
 interface ReportTableProps {
   reports: Report[];
@@ -8,7 +9,8 @@ interface ReportTableProps {
 
 const ReportTable: React.FC<ReportTableProps> = ({ reports, isLoading }) => {
   const handleDownload = (reportId: string) => {
-    alert(`Загрузка отчета ${reportId} (еще не реализовано)`);
+    // TODO: Реализовать реальную загрузку через API
+    toast.info(`Загрузка отчета ${reportId} (еще не реализовано)`);
   };
 
   const getStatusText = (status: Report['status']) => {

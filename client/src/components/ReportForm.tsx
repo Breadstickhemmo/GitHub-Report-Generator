@@ -1,73 +1,114 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { ReportFormData } from '../types';
+import { toast } from 'react-toastify';
 
 interface ReportFormProps {
   onSubmit: (formData: ReportFormData) => Promise<void>;
 }
 
 const ReportForm: React.FC<ReportFormProps> = ({ onSubmit }) => {
-  const [githubUrl, setGithubUrl] = useState('');
-  const [email, setEmail] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    watch
+  } = useForm<ReportFormData>({
+    defaultValues: {
+        githubUrl: "",
+        email: "",
+        startDate: "",
+        endDate: ""
+    }
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit({ githubUrl, email, startDate, endDate });
-    setGithubUrl('');
-    setEmail('');
-    setStartDate('');
-    setEndDate('');
+  const startDateValue = watch("startDate");
+
+  const handleFormSubmit: SubmitHandler<ReportFormData> = async (data) => {
+    try {
+      await onSubmit(data);
+      reset();
+    } catch (error) {
+      console.error("Error during form submission:", error);
+      toast.error("Не удалось отправить форму. Попробуйте снова.");
+    }
   };
 
   return (
     <div className="card">
-      <form onSubmit={handleSubmit} className="form">
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="form" noValidate>
         <div className="form-group">
-          <label>GitHub репозиторий</label>
+          <label htmlFor="githubUrl">GitHub репозиторий</label>
           <input
             type="url"
+            id="githubUrl"
             placeholder="https://github.com/owner/repo"
-            value={githubUrl}
-            onChange={(e) => setGithubUrl(e.target.value)}
-            required
+            className={errors.githubUrl ? 'input-error' : ''}
+            {...register("githubUrl", {
+              required: "URL репозитория обязателен",
+              pattern: {
+                value: /^https:\/\/github\.com\/[^/]+\/[^/]+(\/)?$/i,
+                message: "Неверный формат URL GitHub (https://github.com/owner/repo)"
+              }
+            })}
+            disabled={isSubmitting}
           />
+          {errors.githubUrl && <span className="error-message">{errors.githubUrl.message}</span>}
         </div>
 
         <div className="form-group">
-          <label>Email пользователя GitHub</label>
+          <label htmlFor="email">Email пользователя GitHub</label>
           <input
             type="email"
+            id="email"
             placeholder="example@domain.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
+            className={errors.email ? 'input-error' : ''}
+            {...register("email", {
+              required: "Email обязателен",
+              pattern: {
+                value: /^\S+@\S+$/i,
+                message: "Неверный формат email"
+              }
+            })}
+            disabled={isSubmitting}
           />
+          {errors.email && <span className="error-message">{errors.email.message}</span>}
         </div>
 
         <div className="date-group">
           <div className="date-field">
-            <label>Дата начала</label>
+            <label htmlFor="startDate">Дата начала</label>
             <input
               type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              required
+              id="startDate"
+              className={errors.startDate ? 'input-error' : ''}
+              {...register("startDate", { required: "Дата начала обязательна" })}
+              disabled={isSubmitting}
             />
+             {errors.startDate && <span className="error-message">{errors.startDate.message}</span>}
           </div>
           <div className="date-field">
-            <label>Дата окончания</label>
+            <label htmlFor="endDate">Дата окончания</label>
             <input
               type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              required
+              id="endDate"
+              className={errors.endDate ? 'input-error' : ''}
+              {...register("endDate", {
+                required: "Дата окончания обязательна",
+                validate: value => {
+                    if (!startDateValue) return true;
+                    return new Date(value) >= new Date(startDateValue) || "Дата окончания не может быть раньше даты начала";
+                }
+              })}
+              disabled={isSubmitting}
             />
+            {errors.endDate && <span className="error-message">{errors.endDate.message}</span>}
           </div>
         </div>
 
-        <button type="submit" className="primary-btn">
-          Сформировать отчет
+        <button type="submit" className="primary-btn" disabled={isSubmitting} style={{marginTop: '1rem'}}>
+          {isSubmitting ? 'Генерация...' : 'Сформировать отчет'}
         </button>
       </form>
     </div>
