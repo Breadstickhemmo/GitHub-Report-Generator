@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -42,7 +41,6 @@ const App = () => {
             return await fetchWithAuthHelper(url, options, handleLogout);
         } catch (error) {
             if (error instanceof Error && error.message.includes('401')) {
-                 // Toast might be handled within fetchWithAuthHelper or here if needed
             } else if (error instanceof Error) {
                  toast.error(`Сетевая ошибка: ${error.message}`);
             } else {

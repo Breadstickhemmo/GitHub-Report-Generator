@@ -1,5 +1,3 @@
-# utils.py
-
 import uuid
 import threading
 from reports import process_report
@@ -48,7 +46,6 @@ def create_new_report(data: dict, user_id: str) -> dict:
         logger.info(f"Starting report processing thread for report {report_id} (user {user_id_int})")
         thread = threading.Thread(
             target=process_report,
-            # Removed app argument as process_report imports it now
             args=(report_id, new_db_report.github_url, new_db_report.date_range, new_db_report.email, user_id_int)
         )
         thread.start()

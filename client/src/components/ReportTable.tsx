@@ -1,5 +1,3 @@
-// src/components/ReportTable.tsx
-
 import React from 'react';
 import { Report } from '../types';
 import { toast } from 'react-toastify';

@@ -1,5 +1,3 @@
-# routes.py
-
 from flask import jsonify, request, send_file, abort
 from datetime import datetime
 from utils import validate_github_url, create_new_report, get_user_reports
@@ -72,10 +70,9 @@ def register_routes(app):
 
             if report.status != 'completed' or not report.pdf_report_path:
                 logger.warning(f"Download attempt failed: Report {report_id} is not completed or PDF path missing. Status: {report.status}, LLM Status: {report.llm_status}")
-                # Slightly more specific message depending on llm_status
                 if report.status == 'failed' or report.llm_status == 'failed':
                     abort(400, description="Произошла ошибка при создании отчета. Скачивание невозможно.")
-                elif report.llm_status == 'skipped' and not report.pdf_report_path: # Empty report case might miss path
+                elif report.llm_status == 'skipped' and not report.pdf_report_path:
                      abort(400, description="Отчет не содержит файлов для анализа, PDF не сгенерирован.")
                 else:
                     abort(400, description="Отчет еще не готов для скачивания.")

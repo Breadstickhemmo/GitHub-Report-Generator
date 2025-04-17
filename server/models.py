@@ -32,7 +32,7 @@ class Report(db.Model):
     date_range = db.Column(db.String(50), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='processing')
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    report_dir_path = db.Column(db.String(300), nullable=True) # Dir for JSON
+    report_dir_path = db.Column(db.String(300), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     llm_status = db.Column(db.String(20), nullable=False, default='pending')

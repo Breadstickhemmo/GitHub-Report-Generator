@@ -1,5 +1,3 @@
-// src/types.ts
-
 export interface Report {
   id: string;
   githubUrl: string;
@@ -13,7 +11,7 @@ export interface Report {
 
 export interface ReportFormData {
   githubUrl: string;
-  email: string; // GitHub email
+  email: string;
   startDate: string;
   endDate: string;
 }
