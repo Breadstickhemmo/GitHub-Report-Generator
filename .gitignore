@@ -29,6 +29,7 @@ reports/
 app.log
 instance/
 migrations/
+llm_reports/
 
 # React
 build/

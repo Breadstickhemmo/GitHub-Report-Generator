@@ -32,13 +32,20 @@ class Report(db.Model):
     date_range = db.Column(db.String(50), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='processing')
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    report_dir_path = db.Column(db.String(300), nullable=True)
+    report_dir_path = db.Column(db.String(300), nullable=True) # Dir for JSON
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    llm_status = db.Column(db.String(20), nullable=False, default='pending')
+    pdf_report_path = db.Column(db.String(350), nullable=True)
+
 
     def get_report_file_path(self):
         if not self.report_dir_path:
             return None
         return os.path.join(self.report_dir_path, f"report_{self.id}.json")
 
+    def get_pdf_report_file_path(self) -> str | None:
+        return self.pdf_report_path
+
     def __repr__(self):
-        return f'<Report {self.id} for User {self.user_id}>'
+        return f'<Report {self.id} for User {self.user_id} Status: {self.status} LLM: {self.llm_status}>'

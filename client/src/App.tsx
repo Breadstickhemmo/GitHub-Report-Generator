@@ -1,3 +1,4 @@
+// src/App.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -7,6 +8,7 @@ import ReportForm from './components/ReportForm';
 import ReportTable from './components/ReportTable';
 import AuthModal from './components/AuthModal';
 import { ToastContainer, toast } from 'react-toastify';
+import { fetchWithAuth as fetchWithAuthHelper } from './utils/fetchWithAuth';
 
 interface User {
     id: number;
@@ -18,12 +20,10 @@ const App = () => {
     const [reports, setReports] = useState<Report[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [authToken, setAuthToken] = useState<string | null>(null);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [authLoading, setAuthLoading] = useState<boolean>(true);
-
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
 
@@ -38,27 +38,20 @@ const App = () => {
     }, []);
 
     const fetchWithAuth = useCallback(async (url: string, options: RequestInit = {}) => {
-        const headers = new Headers(options.headers || {});
-        headers.set('Content-Type', 'application/json');
-
-        if (authToken) {
-            headers.set('Authorization', `Bearer ${authToken}`);
+        try {
+            return await fetchWithAuthHelper(url, options, handleLogout);
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('401')) {
+                 // Toast might be handled within fetchWithAuthHelper or here if needed
+            } else if (error instanceof Error) {
+                 toast.error(`Сетевая ошибка: ${error.message}`);
+            } else {
+                 toast.error("Неизвестная сетевая ошибка.");
+            }
+            throw error;
         }
-
-        const finalOptions: RequestInit = {
-            ...options,
-            headers: headers
-        };
-
-        const response = await fetch(url, finalOptions);
-
-        if (response.status === 401) {
-            handleLogout();
-            throw new Error('Сессия истекла или недействительна. Пожалуйста, войдите снова.');
-        }
-
-        return response;
     }, [authToken, handleLogout]);
+
 
     useEffect(() => {
         const tokenFromStorage = localStorage.getItem('authToken');
@@ -90,9 +83,9 @@ const App = () => {
                     }
                 })
                 .catch((err) => {
-                    if (!(err.message && err.message.includes('Сессия истекла'))) {
-                        handleLogout();
-                    }
+                     if (!(err instanceof Error && err.message.includes('401'))) {
+                        console.error("Error fetching /api/me, logging out:", err);
+                     }
                 })
                 .finally(() => {
                     setAuthLoading(false);
@@ -101,6 +94,7 @@ const App = () => {
              setAuthLoading(false);
         }
     }, [authToken, fetchWithAuth, handleLogout]);
+
 
     const fetchReports = useCallback(async () => {
         if (!isAuthenticated || !authToken) {
@@ -112,34 +106,30 @@ const App = () => {
             const response = await fetchWithAuth('/api/reports');
             if (!response.ok) {
                  const errorData = await response.json().catch(() => ({}));
-                 if (response.status !== 401) {
-                    if (response.status === 422) {
-                        throw new Error(errorData.error || `Необрабатываемая сущность (422) при запросе отчетов.`);
-                    }
-                    throw new Error(errorData.error || `Ошибка сети при загрузке отчетов: ${response.statusText}`);
-                 } else {
-                     return;
-                 }
+                 throw new Error(errorData.error || `Ошибка сети при загрузке отчетов: ${response.statusText}`);
             }
-            const data = await response.json();
-            const validReports = (Array.isArray(data) ? data : []).map((report: any) => ({
+            const data: Report[] = await response.json();
+
+            const validReports = Array.isArray(data) ? data.map(report => ({
                 ...report,
-                status: ['processing', 'completed', 'failed'].includes(report.status)
-                    ? report.status
-                    : 'processing',
-                createdAt: report.createdAt || new Date().toISOString()
-            }));
+                status: ['processing', 'completed', 'failed'].includes(report.status) ? report.status : 'processing',
+                createdAt: report.createdAt || new Date().toISOString(),
+                llm_status: report.llm_status || 'pending',
+                hasPdf: report.hasPdf || false
+            })) : [];
+
             setReports(validReports);
             setError(null);
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Не удалось загрузить отчеты';
-            if (!message.includes('Сессия истекла')) {
-                 setError(message);
-            }
+             if (!(err instanceof Error && err.message.includes('401'))) {
+                const message = err instanceof Error ? err.message : 'Не удалось загрузить отчеты';
+                setError(message);
+             }
         } finally {
             setIsLoading(false);
         }
     }, [isAuthenticated, authToken, fetchWithAuth]);
+
 
     useEffect(() => {
         let intervalId: NodeJS.Timeout | null = null;
@@ -168,14 +158,10 @@ const App = () => {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                 if (response.status !== 401) {
-                    throw new Error(errorData.error || `Ошибка сервера при создании отчета: ${response.statusText}`);
-                 } else {
-                     throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
-                 }
+                throw new Error(errorData.error || `Ошибка сервера при создании отчета: ${response.statusText}`);
             }
 
-            const newReportData = await response.json();
+            const newReportData: Report = await response.json();
 
             toast.success("Запрос на создание отчета отправлен!");
 
@@ -186,22 +172,25 @@ const App = () => {
                     email: newReportData.email || formData.email,
                     dateRange: newReportData.dateRange || `${formData.startDate} - ${formData.endDate}`,
                     status: newReportData.status || 'processing',
-                    createdAt: newReportData.createdAt || new Date().toISOString()
+                    createdAt: newReportData.createdAt || new Date().toISOString(),
+                    llm_status: newReportData.llm_status || 'pending',
+                    hasPdf: newReportData.hasPdf || false
                 },
                 ...prevReports
             ]);
 
-            setTimeout(fetchReports, 3000);
+            setTimeout(fetchReports, 5000);
 
         } catch (err) {
               const errorMessage = err instanceof Error ? err.message : 'Не удалось создать отчет';
-              if (!errorMessage.includes('Сессия истекла')) {
+              if (!(err instanceof Error && err.message.includes('401'))) {
                    setError(errorMessage);
+                   toast.error(errorMessage);
               }
-              throw err;
         } finally {
         }
     };
+
 
     const handleRegister = async (formData: Record<string, string>) => {
         const response = await fetch('/api/register', {
@@ -246,7 +235,7 @@ const App = () => {
 
     const closeLoginModal = () => {
         setIsLoginOpen(false);
-        setError(null); 
+        setError(null);
     };
 
     const closeRegisterModal = () => {
@@ -305,7 +294,11 @@ const App = () => {
                   {isLoading && reports.length === 0 ? (
                       <div style={{ textAlign: 'center', margin: '2rem 0' }}>Загрузка истории отчетов...</div>
                   ) : (
-                      <ReportTable reports={reports} isLoading={isLoading} />
+                      <ReportTable
+                          reports={reports}
+                          isLoading={isLoading}
+                          fetchWithAuth={fetchWithAuth}
+                      />
                   )}
               </>
           )}
@@ -336,7 +329,7 @@ const App = () => {
                 pauseOnFocusLoss
                 draggable
                 pauseOnHover
-                theme="light"
+                theme="colored"
             />
         </div>
     );
