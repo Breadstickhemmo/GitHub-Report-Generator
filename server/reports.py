@@ -1,5 +1,3 @@
-# reports.py
-
 import os
 import json
 from datetime import datetime, timezone
@@ -88,7 +86,6 @@ def process_report(report_id: str, github_url: str, date_range: str, email: str,
                      pdf_report_path = empty_pdf_path
                  except Exception as pdf_err:
                      logger.error(f"[{report_id}] Не удалось создать пустой PDF отчет: {pdf_err}")
-                 # Use return to jump to finally
                  return
 
             logger.info(f"[{report_id}] Initializing LLM Analyzer...")
@@ -104,20 +101,17 @@ def process_report(report_id: str, github_url: str, date_range: str, email: str,
                  llm_final_status = 'failed'
                  raise
 
-            # Check if report_to_update is still in session before committing
             if report_to_update in db.session:
                 report_to_update.llm_status = 'processing'
                 db.session.commit()
             else:
-                # If detached, re-fetch and update
                 report_fresh_intermediate = Report.query.get(report_id)
                 if report_fresh_intermediate:
                     report_fresh_intermediate.llm_status = 'processing'
                     db.session.commit()
-                    report_to_update = report_fresh_intermediate # Update local variable too
+                    report_to_update = report_fresh_intermediate
                 else:
                     logger.error(f"[{report_id}] Failed to update llm_status to processing: Report not found.")
-                    # Consider how to proceed, maybe raise error
 
             logger.info(f"[{report_id}] Starting LLM analysis and PDF generation...")
 

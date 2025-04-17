@@ -1,6 +1,3 @@
-// src/utils/fetchWithAuth.ts
-import { toast } from 'react-toastify';
-
 export const fetchWithAuth = async (
     url: string,
     options: RequestInit = {},
