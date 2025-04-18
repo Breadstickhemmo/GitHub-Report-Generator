@@ -55,20 +55,20 @@ const ReportForm: React.FC<ReportFormProps> = ({ onSubmit }) => {
         <div className="form-group">
           <label htmlFor="githubUrl">GitHub репозиторий</label>
           <div className="input-wrapper">
-              <input
-                type="url"
-                id="githubUrl"
-                placeholder="https://github.com/owner/repo"
-                className={errors.githubUrl ? 'input-error' : ''}
-                {...register("githubUrl", {
-                  required: "URL репозитория обязателен",
-                  pattern: {
-                    value: /^https:\/\/github\.com\/[^/]+\/[^/]+(\/)?$/i,
-                    message: "Неверный формат URL GitHub (https://github.com/owner/repo)"
-                  }
-                })}
-                disabled={isSubmitting}
-              />
+          <input
+              type="url"
+              id="githubUrl"
+              placeholder="https://github.com/owner/repo"
+              className={errors.githubUrl ? 'input-error' : ''}
+              {...register("githubUrl", {
+                required: "URL репозитория обязателен",
+                pattern: {
+                  value: /^https:\/\/github\.com\/[^/]+\/[^/]+(\/.*)?$/i,
+                  message: "Неверный формат URL GitHub (должен начинаться с https://github.com/owner/repo)"
+                }
+              })}
+              disabled={isSubmitting}
+            />
                {githubUrlValue && !isSubmitting && (
                     <button
                       type="button"
