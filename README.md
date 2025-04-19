@@ -101,9 +101,6 @@ python -c 'import secrets; print(secrets.token_hex(32))'
 
 `FLASK_SECRET_KEY=ваш_другой_очень_секретный_ключ_для_flask`
 
-YANDEX_FOLDER_ID=b1g87a3al1lkij4o91l2
-YANDEX_AUTH_TOKEN=AQVNwy6C27TsSF8oWa6mTwrUhJ3jyJpn1RWWHT3n
-
 **3. Настройка базы данных (Flask-Migrate):**
 
 Если вы запускаете проект ВПЕРВЫЕ и папки migrations еще нет:
